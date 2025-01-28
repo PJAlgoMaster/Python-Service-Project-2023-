@@ -1,0 +1,89 @@
+import mysql.connector
+import smtplib
+import ssl
+from email.message import EmailMessage
+
+# Establish a MySQL database connection
+mydb = mysql.connector.connect(
+  host = "",
+  user = "",
+  passwd= "",
+  database = ""
+)
+
+# Create a cursor
+mycursor = mydb.cursor()
+
+# Fetch data from the database
+mycursor.execute("SELECT * FROM `` ORDER BY ``.`ID` DESC LIMIT 60")
+tmsData = mycursor.fetchall()
+
+# Close the database connection
+mydb.close()
+
+# Create an HTML table from the data with improved styling
+html_table = """
+<table style="border-collapse: collapse; width: 80%; margin: 0 auto;">
+    <thead>
+        <tr>
+            <th style="background-color: #007bff; color: white; padding: 12px 15px; text-align: left;">S.No</th>
+            <th style="background-color: #007bff; color: white; padding: 12px 15px; text-align: left;">ID</th>
+            <th style="background-color: #007bff; color: white; padding: 12px 15px; text-align: left;">TMS Message</th>
+        </tr>
+    </thead>
+    <tbody>
+"""
+
+for i, row in enumerate(tmsData, start=1):
+    background_color = "#f2f2f2" if i % 2 == 0 else "#006400"  # Light gray for even rows, dark green for odd rows
+    text_color = "black" if background_color == "#f2f2f2" else "white"  # Black text for even rows, white text for odd rows
+    html_table += f"""
+        <tr style="background-color: {background_color}; color: {text_color};">
+            <td style="padding: 12px 15px; text-align: left;">{i}</td>
+            <td style="padding: 12px 15px; text-align: left;">{row[0]}</td>
+            <td style="padding: 12px 15px; text-align: left;">{row[1]}</td>
+        </tr>
+    """
+
+html_table += """
+    </tbody>
+</table>
+"""
+
+# Email configuration
+SMTPServer = ''
+port = ""
+login = ""
+password = ""
+
+# Create and send the email
+try:
+    msg = EmailMessage()
+    msg.add_alternative(f"""
+        <!DOCTYPE html>
+        <html>
+        <body>
+        <p>Hi Team,</p>
+        <p>Please find below the top 60 columns from the TMS log which was shared to TMS server:</p>
+        {html_table}
+        <p>Thanks & Regards,<br>Increaditech Innovations & Consultancy Services</p>
+        </body>
+        </html>
+        """, subtype='html')
+
+    msg['Subject'] = ""
+    msg['From'] = ""
+    msg['To'] = "---yaha apna email id dalna"
+    msg['CC'] = ""
+
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
+        server.login(login, password)
+        server.send_message(msg)
+        print("Email sent successfully.")
+
+except Exception as e:
+    # Print any error messages to stdout
+    print("Error Message:")
+    print(e)
+    print("Email sending failed.")
